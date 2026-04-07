@@ -1,6 +1,31 @@
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
+app.Use(async (context, next) => {
+    var key = context.Request.Query["key"];
+    if (string.IsNullOrEmpty(key) || key != "secret") {
+        context.Response.StatusCode = 401;
+        context.Response.ContentType = "text/plain; charset=utf-8";
+        await context.Response.WriteAsync("Похоже, на этом сайте есть проблема");
+        return;
+    }
+    await next(context);
+});
+
+app.Use(async (context, next) => {
+    Console.WriteLine($"[LOG] {context.Request.Method} {context.Request.Path}");
+    await next(context);
+    Console.WriteLine($"[LOG] Ответ отправлен: {context.Response.StatusCode}");
+});
+
+app.Use(async (context, next) => {
+    context.Response.Headers.Append("X-Powered-By", "ASP.NET Core Lab27");
+    await next(context);
+});
+
+
+
+
 app.MapGet("/", () => "Добро пожаловать на сервер! ");
 
 app.MapGet("/about", () => "Это мой первый ASP.NET Core сервер");
